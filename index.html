@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Linea — Interior Architecture</title>
+  <meta name="description" content="Studio Linea is an interior architecture atelier designing quiet, light-led luxury residences. Walk through Casa Linea.">
+  <meta name="theme-color" content="#0b0b0c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter+Tight:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/img/00-facade.jpg">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#manifesto">Skip the walkthrough</a>
+
+  <div class="loader" aria-hidden="true">
+    <div class="loader__mark">Studio <em>Linea</em></div>
+    <div class="loader__bar"><span></span></div>
+    <div class="loader__count">000</div>
+  </div>
+
+  <header class="nav">
+    <a href="#top" class="nav__logo" aria-label="Studio Linea home">
+      <span class="nav__line"></span>Studio <em>Linea</em>
+    </a>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#walk">Casa Linea</a>
+      <a href="#projects">Projects</a>
+      <a href="#services">Services</a>
+      <a href="#atelier">Atelier</a>
+    </nav>
+    <a href="#contact" class="nav__cta">Book a consultation</a>
+    <button class="nav__burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+  </header>
+
+  <div class="menu" aria-hidden="true">
+    <nav aria-label="Mobile">
+      <a href="#walk">Casa Linea</a>
+      <a href="#projects">Projects</a>
+      <a href="#services">Services</a>
+      <a href="#atelier">Atelier</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <p class="menu__foot">hello@studiolinea.design — Milano · Dubai</p>
+  </div>
+
+  <canvas class="stage" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main id="top">
+    <!-- ============ WALKTHROUGH ============ -->
+    <section class="walk" id="walk" aria-label="Casa Linea walkthrough">
+      <div class="walk__hud" aria-hidden="true">
+        <div class="hud__progress"><span></span></div>
+        <div class="hud__index"><span class="hud__cur">00</span> / 09</div>
+        <div class="hud__room">Façade</div>
+      </div>
+
+      <div class="walk__captions">
+        <article class="cap cap--hero" data-i="0" data-room="Façade" data-bg="assets/img/00-facade.jpg">
+          <p class="eyebrow">Interior Architecture — Est. 2008</p>
+          <h1 class="hero__title">
+            <span class="line"><span>The space</span></span>
+            <span class="line"><span><em>between</em> the lines</span></span>
+          </h1>
+          <p class="hero__sub">We design residences in stone, shadow and light. Scroll to walk through Casa Linea, our latest private villa.</p>
+          <div class="scroll-hint"><span></span>Scroll to enter</div>
+        </article>
+
+        <article class="cap" data-i="1" data-room="Threshold" data-bg="assets/img/01-entrance.jpg">
+          <p class="cap__n">01 — Threshold</p>
+          <h2>A 3.4&nbsp;m pivot door in blackened steel.</h2>
+          <p>Lime plaster, honed travertine and a single slot of light drawing you inward.</p>
+        </article>
+        <article class="cap cap--right" data-i="2" data-room="Gallery" data-bg="assets/img/02-corridor.jpg">
+          <p class="cap__n">02 — Gallery</p>
+          <h2>The line becomes the plan.</h2>
+          <p>Smoked oak meets microcement along a 24&nbsp;m axis; light grazes, never glares.</p>
+        </article>
+        <article class="cap" data-i="3" data-room="Living" data-bg="assets/img/03-living.jpg">
+          <p class="cap__n">03 — Living</p>
+          <h2>Double height, single gesture.</h2>
+          <p>A monolithic stone hearth anchors a room that dissolves into the garden.</p>
+        </article>
+        <article class="cap cap--right" data-i="4" data-room="Kitchen" data-bg="assets/img/04-kitchen.jpg">
+          <p class="cap__n">04 — Kitchen</p>
+          <h2>Nero Marquina, cut as one.</h2>
+          <p>A waterfall island in book-matched marble, framed by fluted oak and bronze.</p>
+        </article>
+        <article class="cap" data-i="5" data-room="Dining" data-bg="assets/img/05-dining.jpg">
+          <p class="cap__n">05 — Dining</p>
+          <h2>Golden hour, by design.</h2>
+          <p>The table is oriented to the olive tree, so the evening light sets the table.</p>
+        </article>
+        <article class="cap cap--right" data-i="6" data-room="Stair" data-bg="assets/img/06-stair.jpg">
+          <p class="cap__n">06 — Stair</p>
+          <h2>Travertine, suspended.</h2>
+          <p>Cantilevered treads and a blade of skylight: a sculpture you can climb.</p>
+        </article>
+        <article class="cap" data-i="7" data-room="Suite" data-bg="assets/img/07-bedroom.jpg">
+          <p class="cap__n">07 — Suite</p>
+          <h2>Quiet, measured in wool and linen.</h2>
+          <p>Acoustic upholstered walls, hidden light, and the sea beyond the olive groves.</p>
+        </article>
+        <article class="cap cap--right" data-i="8" data-room="Bath" data-bg="assets/img/08-bath.jpg">
+          <p class="cap__n">08 — Bath</p>
+          <h2>Carved from a single block.</h2>
+          <p>A 2.1-tonne marble tub set in a room of continuous stone.</p>
+        </article>
+        <article class="cap" data-i="9" data-room="Horizon" data-bg="assets/img/09-pool.jpg">
+          <p class="cap__n">09 — Horizon</p>
+          <h2>And then, only the line.</h2>
+          <p>Basalt, water and sky meet at the edge where Casa Linea ends.</p>
+          <a class="btn" href="#contact">Begin your project <span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ MANIFESTO ============ -->
+    <section class="manifesto" id="manifesto">
+      <p class="eyebrow">Manifesto</p>
+      <p class="manifesto__text" data-split>We believe luxury is not addition but precision. A shadow gap of three millimetres. A wall that holds the evening light. A room that asks nothing of you. Every Studio Linea interior begins with a single line, and we refuse to draw a second until the first is right.</p>
+      <div class="stats">
+        <div class="stat"><p class="stat__v"><span data-count="140">0</span>+</p><p>Private residences completed</p></div>
+        <div class="stat"><p class="stat__v"><span data-count="16">0</span></p><p>Countries, from Milano to Dubai</p></div>
+        <div class="stat"><p class="stat__v"><span data-count="18">0</span></p><p>Years of interior architecture</p></div>
+        <div class="stat"><p class="stat__v"><span data-count="32">0</span></p><p>Artisan workshops in our network</p></div>
+      </div>
+    </section>
+
+    <!-- ============ MARQUEE ============ -->
+    <section class="marquee" aria-label="Our artisan network">
+      <div class="marquee__track">
+        <span>Marmi Apuane</span><i></i><span><em>Officina Bronzo</em></span><i></i><span>Legnami Cremona</span><i></i><span><em>Tessitura Como</em></span><i></i><span>Vetreria Murano</span><i></i><span><em>Pietra Trani</em></span><i></i>
+        <span aria-hidden="true">Marmi Apuane</span><i></i><span aria-hidden="true"><em>Officina Bronzo</em></span><i></i><span aria-hidden="true">Legnami Cremona</span><i></i><span aria-hidden="true"><em>Tessitura Como</em></span><i></i><span aria-hidden="true">Vetreria Murano</span><i></i><span aria-hidden="true"><em>Pietra Trani</em></span><i></i>
+      </div>
+    </section>
+
+    <!-- ============ "WHERE" ROTATION ============ -->
+    <section class="where" aria-label="Our approach">
+      <div class="where__pin">
+        <p class="eyebrow where__eyebrow">Our approach</p>
+        <div class="where__lines">
+          <h2 class="where__line is-on">Where every <em>joint</em> is a decision.</h2>
+          <h2 class="where__line">Where stone <em>remembers</em> the light.</h2>
+          <h2 class="where__line">Where a room <em>exhales</em> at dusk.</h2>
+          <h2 class="where__line">Where craft <em>outlives</em> the trend.</h2>
+        </div>
+        <div class="where__stack">
+          <img src="assets/img/13-detail.jpg" alt="Shadow-gap joint between fluted oak and travertine" decoding="async">
+          <img src="assets/img/06-stair.jpg" alt="Travertine staircase lit by a blade of skylight" decoding="async">
+          <img src="assets/img/03-living.jpg" alt="Double-height living room at dusk" decoding="async">
+          <img src="assets/img/12-library.jpg" alt="Library lounge with blackened oak shelving" decoding="async">
+        </div>
+        <div class="where__count"><span class="where__cur">01</span> — 04</div>
+      </div>
+    </section>
+
+    <!-- ============ PROJECTS (horizontal) ============ -->
+    <section class="projects" id="projects" aria-label="Selected projects">
+      <div class="projects__pin">
+        <header class="projects__head">
+          <p class="eyebrow">Selected work</p>
+          <h2 class="h-display">Residences <em>in</em> stone &amp; light</h2>
+        </header>
+        <div class="projects__track">
+          <a class="proj" href="#contact">
+            <div class="proj__img"><img src="assets/img/00-facade.jpg" alt="Casa Linea villa at blue hour with reflecting pool" loading="lazy"></div>
+            <div class="proj__meta"><span>01</span><h3>Casa Linea</h3><p>Puglia · 2026 · 1,200 m²</p></div>
+          </a>
+          <a class="proj" href="#contact">
+            <div class="proj__img"><img src="assets/img/14-penthouse.jpg" alt="Penthouse living room at night with panoramic city skyline and black marble floor" loading="lazy"></div>
+            <div class="proj__meta"><span>02</span><h3>Penthouse Nero</h3><p>Dubai · 2025 · 640 m²</p></div>
+          </a>
+          <a class="proj" href="#contact">
+            <div class="proj__img"><img src="assets/img/12-library.jpg" alt="Library lounge with blackened oak shelving, leather chairs and linear fireplace" loading="lazy"></div>
+            <div class="proj__meta"><span>03</span><h3>Biblioteca Brera</h3><p>Milano · 2024 · 410 m²</p></div>
+          </a>
+          <a class="proj" href="#contact">
+            <div class="proj__img"><img src="assets/img/04-kitchen.jpg" alt="Black marble kitchen island with fluted oak cabinetry at dusk" loading="lazy"></div>
+            <div class="proj__meta"><span>04</span><h3>Casa Linea — Cucina</h3><p>Puglia · 2026 · Kitchen</p></div>
+          </a>
+          <a class="proj" href="#contact">
+            <div class="proj__img"><img src="assets/img/08-bath.jpg" alt="Bathroom with a freestanding tub carved from black marble" loading="lazy"></div>
+            <div class="proj__meta"><span>05</span><h3>Casa Linea — Bagno</h3><p>Puglia · 2026 · Spa</p></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MATERIALS ============ -->
+    <section class="materials">
+      <div class="materials__img materials__img--a"><img src="assets/img/10-materials.jpg" alt="Material palette of travertine, black marble, smoked oak, bronze and bouclé on charcoal felt" loading="lazy"></div>
+      <div class="materials__copy">
+        <p class="eyebrow">Material library</p>
+        <h2 class="h-display">Six materials. <em>Infinite</em> restraint.</h2>
+        <ul class="swatches">
+          <li><i style="--c:#d8cbb6"></i>Honed travertine</li>
+          <li><i style="--c:#121212"></i>Nero Marquina</li>
+          <li><i style="--c:#4a3b2e"></i>Smoked oak</li>
+          <li><i style="--c:#8a6a3f"></i>Blackened bronze</li>
+          <li><i style="--c:#3a3a3a"></i>Charcoal bouclé</li>
+          <li><i style="--c:#9d9a94"></i>Stone linen</li>
+        </ul>
+      </div>
+      <div class="materials__img materials__img--b"><img src="assets/img/13-detail.jpg" alt="Macro detail of a shadow-gap joint between fluted oak and travertine with a bronze handle" loading="lazy"></div>
+    </section>
+
+    <!-- ============ VALUES ============ -->
+    <section class="values" aria-label="What truly matters to us">
+      <h2 class="h-display values__title">What truly <em>matters</em> to us</h2>
+      <div class="values__grid">
+        <article class="value">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="18" cy="24" r="12"/><circle cx="30" cy="24" r="12"/></svg>
+          <h3>Co-creation</h3>
+          <p>Your home should be an extension of you. Every brief begins with listening: how you wake, host, read and rest.</p>
+        </article>
+        <article class="value">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 40h36M10 40V18h28v22M16 18V8h16v10"/></svg>
+          <h3>Craft</h3>
+          <p>Thirty-two Italian workshops, one standard. Stone, bronze and timber detailed to the millimetre and finished by hand.</p>
+        </article>
+        <article class="value">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 42C12 34 8 24 10 8c14 2 24 10 24 22 0 6-4 10-10 12z"/><path d="M24 42c0-12 2-20 8-26"/></svg>
+          <h3>Longevity</h3>
+          <p>Certified materials, local supply chains and designs meant to age, not date. The most sustainable room is the one you keep.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ SERVICES ============ -->
+    <section class="services" id="services">
+      <p class="eyebrow">What we do</p>
+      <ol class="svc">
+        <li><span>01</span><h3>Interior Architecture</h3><p>Spatial planning, joinery and detailing for new builds and full renovations.</p></li>
+        <li><span>02</span><h3>Lighting Design</h3><p>Light-led concepts: grazing, slots and scenes calibrated to every hour.</p></li>
+        <li><span>03</span><h3>Furniture &amp; Art Curation</h3><p>Bespoke pieces and sourcing from Italy's finest workshops and galleries.</p></li>
+        <li><span>04</span><h3>Turnkey Delivery</h3><p>One team from first sketch to the last cushion, on site and on schedule.</p></li>
+      </ol>
+    </section>
+
+    <!-- ============ ATELIER ============ -->
+    <section class="atelier" id="atelier">
+      <div class="atelier__img"><img src="assets/img/11-atelier.jpg" alt="Studio Linea atelier in Milano with architectural model, plans and stone samples" loading="lazy"></div>
+      <div class="atelier__copy">
+        <p class="eyebrow">The atelier</p>
+        <h2 class="h-display">Drawn in Milano, <em>built</em> everywhere.</h2>
+        <p>Studio Linea is a team of 28 architects, designers and craftspeople. We take on a limited number of residences each year, so that every one receives the same obsessive attention to the line.</p>
+        <a class="btn btn--ghost" href="#contact">Meet the studio <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section class="contact" id="contact">
+      <h2 class="contact__title">Let's draw <em>the first line.</em></h2>
+      <form class="form" novalidate>
+        <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required></div>
+        <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field field--full"><label for="f-project">Tell us about your space</label><textarea id="f-project" name="project" rows="3"></textarea></div>
+        <button class="btn" type="submit">Send enquiry <span aria-hidden="true">→</span></button>
+        <p class="form__note" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__big">Studio <em>Linea</em></div>
+    <div class="foot__row">
+      <p>Via Solferino 12, Milano<br>DIFC Gate Village, Dubai</p>
+      <p><a href="mailto:hello@studiolinea.design">hello@studiolinea.design</a><br>+39 02 0000 0000</p>
+      <p><a href="#">Instagram</a><br><a href="#">Pinterest</a></p>
+      <p>© 2026 Studio Linea<br>Demo website</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
