@@ -205,6 +205,10 @@ main { position: relative; z-index: 1; }
 .projects__head { padding: 0 var(--gutter); }
 .projects__track { display: flex; gap: clamp(20px, 3vw, 48px); padding: 0 var(--gutter); will-change: transform; }
 .proj { flex: 0 0 auto; width: clamp(280px, 38vw, 620px); }
+.proj__img, .materials__img, .atelier__img, .where__stack {
+  transform: perspective(1200px) rotateY(calc(var(--v, 0) * -10deg)) skewX(calc(var(--v, 0) * -3deg));
+  transition: transform .5s var(--ease);
+}
 .proj__img { aspect-ratio: 4 / 3; overflow: hidden; background: var(--graphite); clip-path: inset(0 0 0 0); transition: clip-path .8s var(--ease); }
 .proj__img img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); transition: transform 1.2s var(--ease), filter 1.2s var(--ease); filter: grayscale(.35) brightness(.85); }
 .proj:hover .proj__img, .proj:focus-visible .proj__img { clip-path: inset(3% 3% 3% 3%); }
