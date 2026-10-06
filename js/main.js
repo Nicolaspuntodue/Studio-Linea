@@ -14,6 +14,9 @@ const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t *
 const lenis = reduced ? null : new Lenis({ lerp: 0.08 });
 if (lenis) {
   lenis.on('scroll', ScrollTrigger.update);
+  // scroll speed bends the page a little: cards tilt and skew in perspective, then settle
+  const root = document.documentElement.style;
+  lenis.on('scroll', (e) => { root.setProperty('--v', clamp(e.velocity / 40, -1, 1).toFixed(3)); });
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
   lenis.stop();
@@ -87,181 +90,201 @@ if (!reduced) {
   catch (e) { renderer = null; }
 }
 
-const intro = { z: 0 };
+const intro = { open: 0 };   // the line that opens onto the façade
 let stage = null;
 if (renderer) stage = createStage();
 else createFallback();
 
 function createStage() {
-  const D = 10;            // distance between rooms
-  const FOV = 50;
-  const OVERSIZE = 1.08;   // headroom for mouse parallax
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0b0b0c);
-  const camera = new THREE.PerspectiveCamera(FOV, innerWidth / innerHeight, 0.05, 200);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  /*
+   * Each photograph is projected back onto a 3D room (a box seen from the inside)
+   * from the exact point it was "shot" from. At rest the camera sits on that point,
+   * so you see the untouched photo; as you scroll it walks forward and the floor,
+   * walls and ceiling slide past with real parallax. Rooms are joined by the brand
+   * line: a vertical seam of light that parts like pocket doors onto the next room.
+   */
+  const IMG_ASPECT = 16 / 9;
+  const FOVY = 50;                                    // assumed lens of the photographs
+  const ty = Math.tan(THREE.MathUtils.degToRad(FOVY / 2));
+  const tx = ty * IMG_ASPECT;
+  // per room: [depth of the photographed space (back wall distance), how far we walk in]
+  const SHAPE = [[4, 0.38], [4.5, 0.72], [5, 0.8], [2.6, 0.5], [2.6, 0.45], [2.6, 0.45], [2.3, 0.4], [2.6, 0.45], [2.3, 0.4], [4, 0.38]];
 
-  const vert = /* glsl */`
-    varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-  const frag = /* glsl */`
-    uniform sampler2D uTex;
-    uniform float uImgAspect, uPlaneAspect, uOpen, uDim, uVel, uSide;
-    uniform vec2 uMouse;
-    varying vec2 vUv;
-    vec2 cover(vec2 uv) {
-      float r = uPlaneAspect / uImgAspect;
-      vec2 s = r > 1.0 ? vec2(1.0, 1.0 / r) : vec2(r, 1.0);
-      return (uv - 0.5) * s + 0.5;
-    }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(FOVY, innerWidth / innerHeight, 0.01, 50);
+  camera.rotation.order = 'YXZ';
+
+  const projector = new THREE.PerspectiveCamera(FOVY, IMG_ASPECT, 0.01, 100);
+  projector.updateMatrixWorld();
+  const projMat = new THREE.Matrix4().multiplyMatrices(projector.projectionMatrix, projector.matrixWorldInverse);
+
+  const roomVert = /* glsl */`
+    varying vec3 vWorld;
     void main() {
-      vec2 full = vec2(vUv.x * 0.5 + uSide * 0.5, vUv.y);   // each door shows its half of the room
-      vec2 uv = cover(full);
-      uv = (uv - 0.5) * (0.95 - uOpen * 0.05) + 0.5 + uMouse * 0.01;
-      float k = clamp(uVel, -1.5, 1.5) * 0.0025;   // subtle chroma split while moving
-      vec3 col;
-      col.r = texture2D(uTex, uv + vec2(k, 0.0)).r;
-      col.g = texture2D(uTex, uv).g;
-      col.b = texture2D(uTex, uv - vec2(k, 0.0)).b;
-      // shared grade so every room reads as one shoot: soft desaturation,
-      // shadows pulled to the brand ink, highlights warmed toward travertine
+      vec4 w = modelMatrix * vec4(position, 1.0);
+      vWorld = w.xyz;
+      gl_Position = projectionMatrix * viewMatrix * w;
+    }`;
+  const roomFrag = /* glsl */`
+    uniform sampler2D uTex;
+    uniform mat4 uProj;
+    uniform float uImgAspect;
+    varying vec3 vWorld;
+    void main() {
+      vec4 p = uProj * vec4(vWorld, 1.0);
+      vec2 uv = p.xy / p.w * 0.5 + 0.5;
+      float r = ${IMG_ASPECT.toFixed(5)} / uImgAspect;           // cover-fit non 16:9 photos
+      uv = r > 1.0 ? vec2(uv.x, (uv.y - 0.5) / r + 0.5) : vec2((uv.x - 0.5) * r + 0.5, uv.y);
+      vec3 col = texture2D(uTex, clamp(uv, 0.001, 0.999)).rgb;
+      // shared grade so every room reads as one shoot
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(vec3(l), col, 0.88);
       col = mix(vec3(0.043, 0.043, 0.047), col, smoothstep(-0.02, 0.18, l) * 0.8 + 0.2);
       col *= mix(vec3(1.0), vec3(1.05, 1.0, 0.93), smoothstep(0.35, 1.0, l));
-      col = col * col * (3.0 - 2.0 * col) * 0.2 + col * 0.8 * 1.06;   // gentle filmic S-curve, slight lift
-      // the line: a warm seam of light where the doors part
-      float d = abs(full.x - 0.5);
-      float start = smoothstep(0.0, 0.08, uOpen);
-      vec3 warm = vec3(1.0, 0.8, 0.56);
-      col += warm * exp(-d * 420.0) * start * 1.2;
-      col += warm * exp(-d * 18.0) * start * 0.18 * (1.0 - uOpen);
-      // vignette, door shading as it swings, distance dimming
-      float v = 1.0 - 0.32 * pow(length(full - 0.5) * 1.25, 2.0);
-      col *= v * uDim * (1.0 - uOpen * 0.45);
+      col = col * col * (3.0 - 2.0 * col) * 0.2 + col * 0.8 * 1.06;
+      // atmospheric depth: what is far sinks gently into the dusk
+      float dist = length(vWorld - cameraPosition);
+      col *= mix(1.0, 0.8, smoothstep(1.2, 4.5, dist));
       gl_FragColor = vec4(col, 1.0);
     }`;
 
-  const unit = new THREE.PlaneGeometry(1, 1);
-  const leftGeo = unit.clone().translate(0.5, 0, 0);   // hinge on the left edge
-  const rightGeo = unit.clone().translate(-0.5, 0, 0); // hinge on the right edge
   const manager = new THREE.LoadingManager();
   manager.onProgress = (_, loaded, total) => setLoad(loaded / total);
   const loader = new THREE.TextureLoader(manager);
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  const doors = rooms.map((r, i) => {
-    const group = new THREE.Group();
-    group.position.z = -(i + 1) * D;
-    const halves = [];
-    const tex = loader.load(r.src, (t) => {
-      halves.forEach((h) => { h.u.uImgAspect.value = t.image.width / t.image.height; });
-    });
-    tex.anisotropy = maxAniso;
-    for (const [geo, side] of [[leftGeo, 0], [rightGeo, 1]]) {
-      const u = {
-        uTex: { value: tex }, uImgAspect: { value: 16 / 9 }, uPlaneAspect: { value: 1 },
-        uOpen: { value: 0 }, uDim: { value: 1 }, uVel: { value: 0 }, uSide: { value: side },
-        uMouse: { value: new THREE.Vector2() },
-      };
-      const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ uniforms: u, vertexShader: vert, fragmentShader: frag, side: THREE.DoubleSide }));
-      const pivot = new THREE.Group();
-      pivot.add(mesh);
-      group.add(pivot);
-      halves.push({ pivot, mesh, u });
-    }
-    scene.add(group);
-    return { group, left: halves[0], right: halves[1] };
+  const stageRooms = rooms.map((r, i) => {
+    const [L, push] = SHAPE[i] || [3, 0.45];
+    const u = { uTex: { value: null }, uProj: { value: projMat }, uImgAspect: { value: IMG_ASPECT } };
+    u.uTex.value = loader.load(r.src, (t) => { u.uImgAspect.value = t.image.width / t.image.height; });
+    u.uTex.value.anisotropy = maxAniso;
+    // box from just behind the lens (z = +1) to the back wall (z = -L); walls sit on the photo's frustum at z = -1
+    const geo = new THREE.BoxGeometry(2 * tx, 2 * ty, L + 1, 1, 1, 8).translate(0, 0, (1 - L) / 2);
+    const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ uniforms: u, vertexShader: roomVert, fragmentShader: roomFrag, side: THREE.BackSide }));
+    mesh.visible = false;
+    scene.add(mesh);
+    return { mesh, push };
   });
 
-  /* Linear light guides between rooms — the "linea" running through the house */
-  const box = new THREE.BoxGeometry(1, 1, D * 0.98);
-  const LINES = [[0, 0.44, 0.03], [-0.2, -0.44, 0.015], [0.2, -0.44, 0.015], [-0.46, 0, 0.008], [0.46, 0, 0.008]];
-  const segments = rooms.slice(0, -1).map((_, i) => {
-    const g = new THREE.Group();
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffd6a0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-    const lines = LINES.map(([x, y, t]) => {
-      const m = new THREE.Mesh(box, mat);
-      m.userData = { x, y, t };
-      g.add(m);
-      return m;
-    });
-    g.position.z = -(i + 1.5) * D;
-    scene.add(g);
-    return { mat, lines };
-  });
-
-  /* Dust motes drifting in the light */
-  const COUNT = innerWidth < 768 ? 350 : 900;
+  /* Dust motes hanging in the light, shared by every room */
+  const COUNT = innerWidth < 768 ? 260 : 700;
   const pos = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
-    pos[i * 3] = (Math.random() - 0.5) * 14;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
-    pos[i * 3 + 2] = -Math.random() * D * (N + 1) + 4;
+    pos[i * 3] = (Math.random() - 0.5) * tx * 1.8;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * ty * 1.8;
+    pos[i * 3 + 2] = -0.3 - Math.random() * 2.6;
   }
   const dustGeo = new THREE.BufferGeometry();
   dustGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
-    color: 0xffe2b8, size: 0.022, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending,
+    color: 0xffd9a8, size: 0.0045, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
   scene.add(dust);
 
+  /* Two render targets (current room, next room) composited through the line */
+  const rtA = new THREE.WebGLRenderTarget(1, 1);
+  const rtB = new THREE.WebGLRenderTarget(1, 1);
+  const post = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    uniforms: {
+      tA: { value: rtA.texture }, tB: { value: rtB.texture },
+      uMix: { value: 0 }, uLine: { value: 0 }, uVel: { value: 0 }, uIntro: { value: 1 }, uHasB: { value: 0 },
+    },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: /* glsl */`
+      uniform sampler2D tA, tB;
+      uniform float uMix, uLine, uVel, uIntro, uHasB;
+      varying vec2 vUv;
+      vec3 rgbSplit(sampler2D t, vec2 uv, vec2 d) {
+        return vec3(texture2D(t, uv + d).r, texture2D(t, uv).g, texture2D(t, uv - d).b);
+      }
+      void main() {
+        vec2 uv = vUv;
+        vec2 c = uv - 0.5;
+        float dx = c.x, ady = abs(c.y);
+        vec3 warm = vec3(1.0, 0.8, 0.55);
+        vec2 k = c * clamp(abs(uVel), 0.0, 2.0) * 0.012;           // lens split while moving
+
+        // current room slides apart from the seam, like pocket doors
+        float hw = uMix * 0.5;
+        vec2 ua = vec2(uv.x - sign(dx) * hw, uv.y);
+        vec3 a = rgbSplit(tA, ua, k);
+        // next room settles in from a slight zoom
+        vec2 ub = c / mix(1.22, 1.0, uMix) + 0.5;
+        vec3 b = rgbSplit(tB, ub, k) * (0.55 + 0.45 * uMix);
+        float m = smoothstep(hw + 0.002, hw - 0.002, abs(dx)) * step(0.0005, uMix) * uHasB;
+        vec3 col = mix(a, b, m);
+
+        // the line: grows from the centre, flares, then parts
+        float len = smoothstep(0.0, 1.0, uLine) * 0.56;
+        float vmask = smoothstep(len, len - 0.06, ady);
+        float glow = uLine * (1.0 - uMix * 0.8);
+        col += warm * exp(-abs(abs(dx) - hw) * 420.0) * vmask * glow * 1.6;
+        col += warm * exp(-abs(dx) * 16.0) * vmask * uLine * (1.0 - uMix) * 0.22;
+        col += warm * exp(-ady * 110.0) * exp(-abs(dx) * 2.2) * uLine * (1.0 - uMix) * 0.4;   // anamorphic flare
+        col *= 1.0 - 0.32 * pow(length(c * vec2(1.0, 0.9)) * 1.3, 2.0);
+
+        // intro: the same line opens onto the façade
+        float ih = uIntro * 0.5;
+        float im = smoothstep(ih + 0.002, ih - 0.002, abs(dx));
+        float il = exp(-abs(abs(dx) - ih) * 420.0) * (1.0 - uIntro) * smoothstep(0.0, 0.08, uIntro + 0.02);
+        col = mix(vec3(0.043, 0.043, 0.047), col, im) + warm * il * 1.4;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+    depthTest: false, depthWrite: false,
+  }));
+  const postScene = new THREE.Scene();
+  postScene.add(post);
+  const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const U = post.material.uniforms;
+
   function resize() {
     renderer.setSize(innerWidth, innerHeight, false);
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2());
+    rtA.setSize(size.x, size.y);
+    rtB.setSize(size.x, size.y);
     camera.aspect = innerWidth / innerHeight;
+    // cover the photo: never see past its frame, with a little headroom for looking around
+    const t = Math.min(ty, tx / camera.aspect) * 0.92;
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(t));
     camera.updateProjectionMatrix();
-    const H = 2 * D * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * OVERSIZE;
-    const W = H * camera.aspect;
-    doors.forEach(({ left, right }) => {
-      left.mesh.scale.set(W / 2, H, 1); left.pivot.position.x = -W / 2;
-      right.mesh.scale.set(W / 2, H, 1); right.pivot.position.x = W / 2;
-      left.u.uPlaneAspect.value = right.u.uPlaneAspect.value = W / H;
-    });
-    segments.forEach(({ lines }) => lines.forEach((m) => {
-      const { x, y, t } = m.userData;
-      m.position.set(x * W, y * H, 0);
-      m.scale.set(t, t, 1);
-    }));
   }
   resize();
   addEventListener('resize', resize);
 
   const mouse = new THREE.Vector2(), mouseS = new THREE.Vector2();
   addEventListener('pointermove', (e) => { mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight * 2 - 1)); });
-
   const clock = new THREE.Clock();
+
+  function shoot(i, z, t, target) {
+    stageRooms.forEach((r, k) => { r.mesh.visible = k === i; });
+    const breathe = Math.sin(t * 0.35) * 0.012 + 0.012;   // never drifts behind the lens
+    camera.position.set(mouseS.x * 0.035, mouseS.y * 0.02 + Math.sin(t * 0.5) * 0.004, -(z + breathe));
+    camera.rotation.set(mouseS.y * 0.03, -mouseS.x * 0.05, Math.sin(t * 0.27) * 0.002);
+    dust.position.z = -z * 0.15;
+    renderer.setRenderTarget(target);
+    renderer.render(scene, camera);
+  }
+
   function render(p) {
     const t = clock.getElapsedTime();
-    mouseS.lerp(mouse, 0.05);
-    camera.position.set(mouseS.x * 0.35, mouseS.y * 0.2, -p * D + intro.z);
-    camera.lookAt(mouseS.x * 0.1, mouseS.y * 0.05, camera.position.z - D);
+    mouseS.lerp(mouse, 0.04);
+    const i = Math.min(N - 1, Math.floor(p));
+    const local = i === N - 1 ? 0 : p - i;
+    dust.rotation.y = t * 0.01;
 
-    doors.forEach(({ group, left, right }, i) => {
-      const local = p - i;
-      const dist = camera.position.z - group.position.z;
-      const visible = local < 1.02 && dist < D * 3.2;
-      group.visible = visible;
-      if (!visible) return;
-      const open = smooth(0.22, 0.88, local);
-      left.pivot.rotation.y = open * 1.5;
-      right.pivot.rotation.y = -open * 1.5;
-      const dim = clamp(1 - (dist / D - 1) * 0.3);   // next room glows through the doorway
-      for (const s of [left, right]) {
-        s.u.uOpen.value = open;
-        s.u.uDim.value = dim;
-        s.u.uVel.value = vel;
-        s.u.uMouse.value.copy(mouseS);
-      }
-    });
+    // walk into the current room for the whole segment
+    shoot(i, stageRooms[i].push * local, t, rtA);
+    const hasB = i < N - 1 && local > 0.3;
+    if (hasB) shoot(i + 1, 0, t, rtB);
 
-    segments.forEach(({ mat }, i) => {
-      const local = p - i;
-      mat.opacity = smooth(0.15, 0.55, local) * (1 - smooth(0.75, 1.0, local)) * 0.9;
-    });
-
-    dust.rotation.z = t * 0.01;
-    dust.position.y = Math.sin(t * 0.2) * 0.15;
-    renderer.render(scene, camera);
+    U.uLine.value = i < N - 1 ? smooth(0.3, 0.55, local) : 0;
+    U.uMix.value = i < N - 1 ? smooth(0.52, 1.0, local) : 0;
+    U.uHasB.value = hasB ? 1 : 0;
+    U.uVel.value = vel;
+    U.uIntro.value = intro.open;
+    renderer.setRenderTarget(null);
+    renderer.render(postScene, postCam);
   }
 
   return { manager, render };
@@ -322,8 +345,7 @@ function start() {
     lenis?.start();
     ScrollTrigger.refresh();
     if (!reduced) {
-      intro.z = 6;
-      gsap.to(intro, { z: 0, duration: 2.6, ease: 'expo.out' });
+      gsap.to(intro, { open: 1, duration: 2.4, ease: 'expo.inOut', delay: 0.15 });
       gsap.to('.hero__title .line > span', { y: 0, duration: 1.6, ease: 'expo.out', stagger: 0.12, delay: 0.25 });
       gsap.from(['.cap--hero .eyebrow', '.hero__sub', '.scroll-hint'], { opacity: 0, y: 24, duration: 1.2, ease: 'expo.out', stagger: 0.1, delay: 0.6 });
     } else {
